@@ -23,7 +23,11 @@ RE_DAILY = Regex('src="(.+?)"')
 # ###################################################################################################
 
 def Start():
+    Plugin.AddViewGroup("List", viewMode="List", mediaType="items")
+    Plugin.AddViewGroup("InfoList", viewMode="InfoList", mediaType="items")
     ObjectContainer.title1 = NAME
+    ObjectContainer.view_group = 'List'
+
     HTTP.CacheTime = CACHE_1HOUR
     HTTP.Headers['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:22.0) Gecko/20100101 Firefox/22.0'
     HTTP.Headers['X-Requested-With'] = 'XMLHttpRequest'
@@ -35,8 +39,7 @@ def MainMenu():
     oc = ObjectContainer()
     oc.add(InputDirectoryObject(
         key=Callback(Search),
-        title='[COLOR ffff6347]SEARCH[/COLOR]',
-        thumb=R(SEARCH_ICO)
+        title='SEARCH'
     ))
     try:
         link = HTTP.Request(BASE_URL,cacheTime=3600).content
@@ -56,7 +59,6 @@ def MainMenu():
 
     return oc
 
-
 ####################################################################################################
 
 @route('/video/phimvang/search')
@@ -71,18 +73,16 @@ def Category(title, catelink):
     link = HTTP.Request(catelink,cacheTime=3600).content
     soup = BeautifulSoup(link)
     h2s = soup('h2')
-
     for h in h2s:
         hsoup = BeautifulSoup(str(h))
         hlink = BASE_URL+hsoup('a')[0]['href'].replace('phim','xem-phim')
-        himage = hsoup('img')[0]['data-original']
-        htitle = hsoup('img')[0]['alt']
+        himage = hsoup('img')[1]['data-original']
+        htitle = hsoup('img')[1]['alt']
         oc.add(DirectoryObject(
             key=Callback(Servers, title=htitle, slink=hlink, sthumb=himage),
             title=htitle,
             thumb=himage
         ))
-
     try:
         paging = soup('div',{'class':'paging'})
         pages = BeautifulSoup(str(paging[0]))('a')
@@ -110,7 +110,7 @@ def Servers(title, slink, sthumb):
     soup = BeautifulSoup(link)
     epis = soup('p',{'class':'epi'})
     elist = BeautifulSoup(str(epis[0]))('a')
-    for i in range(1,len(elist)):
+    for i in range(0,len(elist)):
         esoup = BeautifulSoup(str(elist[i]))
         elink = BASE_URL+esoup('a')[0]['href']
         etitle = esoup('a')[0].contents[0]
@@ -198,11 +198,17 @@ def videolinks(url):
     link = urllib2.urlopen(url).read()
     newlink = ''.join(link.splitlines()).replace('\t','')
     if newlink.find('youtube')!=-1:
-        vlink = re.compile("'file' : '(.+?)',").findall(newlink)[0]
+        # vlink = re.compile("'file' : '(.+?)',").findall(newlink)[0]
+        # final_link=vlink
+        vlink = re.compile('file : "(.+?)&amp').findall(newlink)[0]
         final_link=vlink
     else:
-        vlink = re.compile("'link':'(.+?)'}").findall(newlink)[0]
-        final_link = medialink(vlink)
+        # vlink = re.compile("'link':'(.+?)'}").findall(newlink)[0]
+        try:
+            vlinks = re.compile(',\{file: "(.+?)", label:"720p"').findall(newlink)[0]
+        except:
+            vlinks = re.compile('file: "(.+?)", label').findall(newlink)[0]
+        final_link=vlinks
 
     return final_link
 
