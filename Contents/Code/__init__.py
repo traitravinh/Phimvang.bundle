@@ -142,7 +142,7 @@ def Media(metitle, melink, methumb):
         ))
     return oc
 @route('/video/phimvang/createMediaObject')
-def createMediaObject(url, title,thumb,rating_key,include_container=False):
+def createMediaObject(url, title,thumb,rating_key,include_container=False,includeRelatedCount=None,includeRelated=None,includeExtras=None):
     container = Container.MP4
     video_codec = VideoCodec.H264
     audio_codec = AudioCodec.AAC
@@ -209,6 +209,7 @@ def videolinks(url):
         except:
             vlinks = re.compile('file: "(.+?)", label').findall(newlink)[0]
         final_link=vlinks
+        Log(final_link)
 
     return final_link
 
